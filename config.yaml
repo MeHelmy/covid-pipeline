@@ -1,0 +1,66 @@
+# Reference
+#####################
+ref: "/users/mmahmoud/home/projects/covid_workflow/GRCh37.Covid.fa"
+covid_contig: "gi|1798172431|gb|MN908947.3|"
+#####################
+
+# QC
+#####################
+fastqc_threads: 5
+qc_dir: "QC"
+#####################
+
+# Trimming
+#####################
+trim_threads: 5
+trim_dir: "trim"
+trim_option: "ILLUMINACLIP:TruSeq3-PE.fa:2:30:10:1:true LEADING:3 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:30"
+#####################
+
+# Align
+#####################
+align_threads: 5
+bam_dir: "bams"
+bam_other_options: ""
+#####################
+
+# Align statistics
+#####################
+align_stat_threads: 5
+stat_output: "bam_stat"
+#####################
+
+# Trim Bam
+#####################
+trim_bed: "/users/mmahmoud/home/projects/covid_workflow/nCoV-2019.primer.bed"
+prefix: "align.trim"
+min_length: 30
+min_quality: 20
+slid: 4
+#####################
+
+# Calling Varaint
+#####################
+var_prefix: "variants"
+var_min_freq: 0.03
+var_min_quality: 20
+#####################
+
+# Concensus Varaint
+#####################
+con_prefix: "consensus"
+con_min_freq: 0
+con_min_quality: 20
+#####################
+
+# Nextclade
+############
+next_prefix: "nextclade"
+#####################
+
+# Pangolin
+############
+pan_dir_prefix: "clade"
+pan_prefix: "report"
+pan_threads: 1
+#####################
