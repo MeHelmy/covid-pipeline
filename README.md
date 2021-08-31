@@ -1,5 +1,5 @@
 # covid-pipeline
-https://img.shields.io/github/license/MeHelmy/covid-pipeline
+![GitHub](https://img.shields.io/github/license/MeHelmy/covid-pipeline)
 ---
 ## *How to use*:
 
