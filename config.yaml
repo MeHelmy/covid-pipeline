@@ -1,7 +1,7 @@
 # Reference
 #####################
-virus_ref: "/stornext/snfs5/next-gen/scratch/vipin/covid_workflow/version_2/rgenomes/covid19.fasta"
-human_ref: "/stornext/snfs5/next-gen/scratch/vipin/covid_workflow/version_2/rgenomes/Homo_sapiens_assembly19broad.fasta"
+virus_ref: "covid_workflow/version_2/rgenomes/covid19.fasta"
+human_ref: "covid_workflow/version_2/rgenomes/Homo_sapiens_assembly19broad.fasta"
 #####################
 
 # QC
