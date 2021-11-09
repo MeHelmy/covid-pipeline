@@ -53,13 +53,13 @@ def get_reads_for_bam(wildcards):
         wildcards.mydir,
         wildcards.sampledir,
         wildcards.output,
-        config["trim_dir"] + "/paired_R1.fastq.gz",
+        config["trim_dir"] + "/{}_paired_R1.fastq.gz".format(wildcards.sample),
     )
     r2 = os.path.join(
         wildcards.mydir,
         wildcards.sampledir,
         wildcards.output,
-        config["trim_dir"] + "/paired_R2.fastq.gz",
+        config["trim_dir"] + "/{}_paired_R2.fastq.gz".format(wildcards.sample),
     )
     return {"r1": r1, "r2": r2}
 
@@ -78,10 +78,9 @@ rule collect_analysis:
     input:
         qc="{mydir}/{sampledir}/{output}/.{sample}_QC.done",
         # trim = "{mydir}/{sampledir}/{output}/.{sample}.Trim.done",
-        variant="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}_{pre}.tsv".format(
-            pre=config["var_prefix"]
-        ),
-        variant_vcf="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}_{pre}.tsv".format(
+        # variant="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}_{pre}.tsv".format(
+        #     pre=config["var_prefix"]),
+        variant_vcf="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.filtered.{pre}.vcf".format(
             pre=config["var_prefix"]
         ),
         # con = "{{mydir}}/{{sampledir}}/{{output}}/{pre}.fa".format(pre=config['con_prefix']),
@@ -135,22 +134,22 @@ rule TrimData:
     # output:"{mydir}/{sampledir}/{output}/.{sample}.Trim.done"
     output:
         trim1=(
-            "{{mydir}}/{{sampledir}}/{{output}}/{trim_dir}/paired_R1.fastq.gz".format(
+            "{{mydir}}/{{sampledir}}/{{output}}/{trim_dir}/{{sample}}_paired_R1.fastq.gz".format(
                 trim_dir=config["trim_dir"]
             )
         ),
         trim2=(
-            "{{mydir}}/{{sampledir}}/{{output}}/{trim_dir}/paired_R2.fastq.gz".format(
+            "{{mydir}}/{{sampledir}}/{{output}}/{trim_dir}/{{sample}}_paired_R2.fastq.gz".format(
                 trim_dir=config["trim_dir"]
             )
         ),
         trim1_unpaired=(
-            "{{mydir}}/{{sampledir}}/{{output}}/{trim_dir}/unpaired_R1.fastq.gz".format(
+            "{{mydir}}/{{sampledir}}/{{output}}/{trim_dir}/{{sample}}_unpaired_R1.fastq.gz".format(
                 trim_dir=config["trim_dir"]
             )
         ),
         trim2_unpaired=(
-            "{{mydir}}/{{sampledir}}/{{output}}/{trim_dir}/unpaired_R2.fastq.gz".format(
+            "{{mydir}}/{{sampledir}}/{{output}}/{trim_dir}/{{sample}}_unpaired_R2.fastq.gz".format(
                 trim_dir=config["trim_dir"]
             )
         ),
@@ -478,7 +477,33 @@ rule AlignStat:
         """
         samtools stats -@ {threads} {input} > {wildcards.mydir}/{wildcards.sampledir}/{wildcards.output}/{params.file_name}.txt && touch {output}
         """
-
+# Filter based on average read coverage:
+# bcftools query -f '%DP\n' variants.vcf 2> /dev/null | awk '{ sum += $1 } END { printf "%.d",  (sum / NR) }'
+# bcftools query -f '%DP\n' variants.vcf 2> /dev/null | awk '{ sum += $1 } END { printf "%.d",  (sum / NR) - 20*(sum / NR)/100 }' 20% less than average
+rule filterVariant:
+    """
+    Filter called varaint based on precentage < average coverage from varaible filter_ratio
+    """
+    input:
+        variant="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}_{pre}.vcf".format(
+            pre=config["var_prefix"])
+    output:
+        variant="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.filtered.{pre}.vcf".format(
+            pre=config["var_prefix"])
+    params:
+        filter_value=config["filter_ratio"],
+    message: "Filtering {input} using {params.filter_value} ratio"
+    shell:
+        """
+        snv_count=$(grep -cv "#" {input.variant});
+        echo  $snv_count
+        if [ $snv_count >= 2 ]; then
+            fvalue=$(bcftools query -f '[%DP]\\n' {input.variant} 2>/dev/null | awk -v v={params.filter_value} '{{ sum += $1 }} END {{ printf "%.d",  v*(sum / NR)/100 }}') &&\
+            bcftools view -i "DP>${{fvalue}}" {input.variant} > {output.variant}
+        else
+            cp {input.variant} {output.variant};
+        fi
+        """
 
 onsuccess:
     shell("cat etc/end.txt")
