@@ -80,9 +80,9 @@ rule collect_analysis:
         # trim = "{mydir}/{sampledir}/{output}/.{sample}.Trim.done",
         # variant="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}_{pre}.tsv".format(
         #     pre=config["var_prefix"]),
-        variant_vcf="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.filtered.{pre}.vcf".format(
-            pre=config["var_prefix"]
-        ),
+        # variant_vcf="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.filtered.{pre}.vcf".format(
+        #     pre=config["var_prefix"]
+        # ),
         # con = "{{mydir}}/{{sampledir}}/{{output}}/{pre}.fa".format(pre=config['con_prefix']),
         compare="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}_{pre}.json".format(
             pre=config["next_prefix"]
@@ -91,7 +91,9 @@ rule collect_analysis:
             outdir=config["pan_dir_prefix"], pre=config["pan_prefix"]
         ),
         # align_stat="{mydir}/{sampledir}/{output}/{{sample}}_{pre}.csv",
-        align_human_matrix="{mydir}/{sampledir}/{output}/{sample}.human_metrics.tsv",
+        # align_human_matrix="{mydir}/{sampledir}/{output}/{sample}.human_metrics.tsv",
+        multiQC="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.{pre}".format(
+            pre=config["multiqc_quality"]),
     output:
         "{mydir}/{sampledir}/{output}/{sample}.txt",
     shell:
@@ -99,6 +101,57 @@ rule collect_analysis:
         touch {output}
         """
 
+rule MultiQC:
+    """
+    Prouce multi QC for samples inclusing fastq QC aligning ..
+    """
+    input:
+        align_human_matrix="{mydir}/{sampledir}/{output}/{sample}.human_metrics.tsv",
+        align_virus_matrix="{mydir}/{sampledir}/{output}/{sample}.virus_metrics.tsv",
+        virus_vcf_stat="{mydir}/{sampledir}/{output}/{sample}.viral.vcf.stat",
+        viral_variant_ann="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.filtered.{pre}.ann.vcf".format(
+            pre=config["var_prefix"]),
+        bam_qulaity="{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.{mapQ}".format(
+            mapQ=config["map_quality"]),
+    output:directory("{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.{pre}".format(pre=config["multiqc_quality"])),
+    message:"Producing MultiQC"
+    shell:
+        """
+        multiqc {wildcards.mydir}/{wildcards.sampledir}/{wildcards.output} -o {output} -b "COCA pipeline for Covid-19 analysis by Medhat Mahmoud HGSC" -n {wildcards.sample}
+        """
+
+rule MappingQulaity:
+    input:
+        bam="{mydir}/{sampledir}/{output}/{sample}.align.trim.sorted.bam",
+        bam_index="{mydir}/{sampledir}/{output}/{sample}.align.trim.sorted.bam.bai",
+    output:directory("{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.{pre}".format(pre=config["map_quality"])),
+    message:"Calculate mapping quality"
+    params:
+        viral_gff=config['viral_gff']
+    shell:
+        """
+        qualimap bamqc -bam {input.bam} -c -gff {params.viral_gff} -outdir {output}
+        """
+
+rule ViralVcfStat:
+    input:"{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.filtered.{pre}.vcf".format(pre=config["var_prefix"])
+    output:"{mydir}/{sampledir}/{output}/{sample}.viral.vcf.stat"
+    message:"Collect Viral variant statistics"
+    shell:
+        """
+        bcftools stats {input} > {output}
+        """
+
+rule ViralAnnotation:
+    input:"{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.filtered.{pre}.vcf".format(pre=config["var_prefix"])
+    output: "{{mydir}}/{{sampledir}}/{{output}}/{{sample}}.filtered.{pre}.ann.vcf".format(pre=config["var_prefix"])
+    message:"Annotating Viral variants"
+    params:
+        viral_db=config['viral_db']
+    shell:
+        """
+        ${{CONDA_PREFIX}}/bin/snpEff ann {params.viral_db} {input} > {output} -csvStats {wildcards.mydir}/{wildcards.sampledir}/{wildcards.output}/{wildcards.sample}.filtered.ann.csv
+        """
 
 rule QC:
     """
@@ -317,6 +370,29 @@ rule CollectHumanStatMetrics:
         O={output} > {log}
         """
 
+rule CollectVirusStatMetrics:
+    """
+    Collect Virus aligned reads metrics.
+    """
+    input:
+        bam="{mydir}/{sampledir}/{output}/{sample}.align.trim.sorted.bam",
+        bam_index="{mydir}/{sampledir}/{output}/{sample}.align.trim.sorted.bam.bai",
+    output:
+        "{mydir}/{sampledir}/{output}/{sample}.virus_metrics.tsv",
+    message:
+        "Getting aligning metrics for {input}"
+    log:
+        "{mydir}/{sampledir}/{output}/{sample}.virus_metrics.log",
+    params:
+        ref=config["virus_ref"],
+    shell:
+        """
+        picard CollectAlignmentSummaryMetrics \
+        R={params.ref} \
+        I={input.bam}\
+        O={output} > {log}
+        """
+
 
 rule TrimBam:
     input:
@@ -497,8 +573,8 @@ rule filterVariant:
         """
         snv_count=$(grep -cv "#" {input.variant});
         echo  $snv_count
-        if [ $snv_count >= 2 ]; then
-            fvalue=$(bcftools query -f '[%DP]\\n' {input.variant} 2>/dev/null | awk -v v={params.filter_value} '{{ sum += $1 }} END {{ printf "%.d",  v*(sum / NR)/100 }}') &&\
+        if [ "$snv_count" -gt 2 ]; then
+            fvalue=$(bcftools query -f '[%DP]\n' {input.variant} 2>/dev/null | awk -v v={params.filter_value} '{{ sum += $1 }} END {{ printf "%.d",  v*(sum / NR)/100 }}') &&\
             bcftools view -i "DP>${{fvalue}}" {input.variant} > {output.variant}
         else
             cp {input.variant} {output.variant};
