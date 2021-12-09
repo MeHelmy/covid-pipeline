@@ -41,6 +41,7 @@ offset_trimming: 5
 slid: 4
 #####################
 
+
 # Mapping Quality
 #####################
 map_quality: "qualmap.sta"
@@ -50,6 +51,7 @@ map_quality: "qualmap.sta"
 #########
 multiqc_quality: "summary"
 #####################
+
 
 # Calling Variant
 #####################
