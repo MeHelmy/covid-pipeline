@@ -27,6 +27,25 @@ dependencies:
   - bcrypt=3.2.0=py38h497a2fe_1
   - binutils_impl_linux-64=2.35.1=h193b22a_2
   - binutils_linux-64=2.35=h67ddf6f_30
+  - bioconductor-biobase=2.50.0=r40hd029910_1
+  - bioconductor-biocgenerics=0.36.0=r40hdfd78af_1
+  - bioconductor-biocparallel=1.24.1=r40h399db7b_0
+  - bioconductor-biostrings=2.58.0=r40hd029910_1
+  - bioconductor-delayedarray=0.16.3=r40hd029910_0
+  - bioconductor-genomeinfodb=1.26.4=r40hdfd78af_0
+  - bioconductor-genomeinfodbdata=1.2.4=r40hdfd78af_2
+  - bioconductor-genomicalignments=1.26.0=r40hd029910_1
+  - bioconductor-genomicranges=1.42.0=r40hd029910_1
+  - bioconductor-iranges=2.24.1=r40hd029910_0
+  - bioconductor-matrixgenerics=1.2.1=r40hdfd78af_0
+  - bioconductor-noiseq=2.34.0=r40hdfd78af_1
+  - bioconductor-rhtslib=1.22.0=r40hd029910_1
+  - bioconductor-rsamtools=2.6.0=r40h399db7b_1
+  - bioconductor-rtracklayer=1.50.0=r40h7f5ccec_2
+  - bioconductor-s4vectors=0.28.1=r40hd029910_0
+  - bioconductor-summarizedexperiment=1.20.0=r40hdfd78af_1
+  - bioconductor-xvector=0.30.0=r40hd029910_1
+  - bioconductor-zlibbioc=1.36.0=r40hd029910_1
   - biopython=1.74=py38h516909a_0
   - blinker=1.4=py_1
   - boto=2.49.0=py_0
@@ -258,7 +277,23 @@ dependencies:
   - pytz=2021.1=pyhd8ed1ab_0
   - pyyaml=5.4.1=py38h497a2fe_0
   - qt=5.12.9=hda022c4_4
+  - qualimap=2.2.2d=hdfd78af_2
   - r-base=4.0.3=h8ff2632_7
+  - r-bh=1.75.0_0=r40hc72bb7e_0
+  - r-bitops=1.0_7=r40hcfec24a_0
+  - r-crayon=1.4.2=r40hc72bb7e_0
+  - r-formatr=1.11=r40hc72bb7e_0
+  - r-futile.logger=1.4.3=r40hc72bb7e_1003
+  - r-futile.options=1.0.1=r40hc72bb7e_1002
+  - r-getopt=1.20.3=r40_2
+  - r-lambda.r=1.2.4=r40hc72bb7e_1
+  - r-lattice=0.20_45=r40hcfec24a_0
+  - r-matrix=1.3_4=r40he454529_0
+  - r-matrixstats=0.61.0=r40hcfec24a_0
+  - r-optparse=1.7.1=r40hc72bb7e_0
+  - r-rcurl=1.98_1.3=r40hcfec24a_0
+  - r-snow=0.4_4=r40hc72bb7e_0
+  - r-xml=3.99_0.6=r40hcfec24a_0
   - ratelimiter=1.2.0=py38h32f6830_1001
   - readline=8.1=h46c0cb4_0
   - requests=2.25.1=pyhd3deb0d_0
